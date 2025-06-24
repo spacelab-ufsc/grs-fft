@@ -5,8 +5,8 @@ ifndef BUILD_DIR
 endif
 
 CC=gcc
-FLAGS=-fpic -std=c99 -Wall -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes
-LIBS=-pthread -lm -lzmq -lfftw3
+FLAGS=-fpic -std=gnu99 -Wall -pedantic -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes
+LIBS=-lm -lzmq -lfftw3
 
 all: $(BUILD_DIR)/main.o
 	$(CC) $(FLAGS) $(BUILD_DIR)/*.o -o $(BUILD_DIR)/$(TARGET) $(LIBS)

@@ -25,7 +25,7 @@
  * 
  * \author Gabriel Mariano Marcelino <gabriel.mm8@gmail.com>
  * 
- * \version 0.0.2
+ * \version 0.0.3
  * 
  * \date 2025/06/23
  * 
@@ -44,6 +44,11 @@
 
 #include "version.h"
 
+#ifndef M_PI
+#define M_PI (3.14159265358979323846264338327950288)
+#endif
+
+#define GRS_FFT_DEFAULT_BUF_LEN     300000
 #define GRS_FFT_DEFAULT_SIZE        16384
 
 bool verbose = false;
@@ -144,29 +149,32 @@ int main(int argc, char *argv[])
 
     while(1)
     {
+        iq_t iq_buf[GRS_FFT_DEFAULT_BUF_LEN] = {0};
+
         /* Receive IQ samples */
-        int received = zmq_recv(zmq_subscriber, &received_samples, sizeof(iq_samples_t), 0);
-        if (received == -1)
+        int iq_len = zmq_recv(zmq_subscriber, iq_buf, sizeof(iq_t), 0);
+
+        if (iq_len == -1)
         {
             fprintf(stderr, "Error receiving data: %s\n\r", zmq_strerror(errno));
 
             continue;
         }
-
-        if (received != sizeof(iq_samples_t))
+        else
         {
-            fprintf(stderr, "Received incomplete data (%d bytes, expected %zu)\n\r", received, sizeof(iq_samples_t));
+            printf("Samples: %d\n\r", iq_len);
+            uint32_t i = 0U;
+            for(i = 0; i < iq_len; i++)
+            {
+                printf("IQ = [ %f, %f ]\n\r", iq_buf[i].i, iq_buf[i].q);
 
-            continue;
+                iq_samples[i][0] = iq_buf[i].i;
+                iq_samples[i][1] = iq_buf[i].q;
+            }
+
+            /* Compute windowed FFT */
+            compute_fft(iq_samples, N);
         }
-
-        iq_samples[i][0] = /* Your I value */;
-        iq_samples[i][1] = /* Your Q value */;
-
-        /* Compute windowed FFT */
-        compute_fft(iq_samples, N);
-
-        // Process FFT results here...
     }
 
     fftw_free(iq_samples);
