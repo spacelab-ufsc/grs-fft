@@ -31,15 +31,16 @@
 
 ## Dependencies
 
+* libfftw3-dev (>= 3.3.10-13)
 * libczmq-dev (>= 4.2.1-2)
 
 ### Installation on Ubuntu
 
-```sudo apt install libczmq-dev```
+```sudo apt install libfftw3-dev libczmq-dev```
 
 ### Installation on Fedora
 
-```sudo dnf install czmq-devel```
+```sudo dnf install fftw-devel czmq-devel```
 
 ## Building
 
