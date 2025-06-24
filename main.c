@@ -25,7 +25,7 @@
  * 
  * \author Gabriel Mariano Marcelino <gabriel.mm8@gmail.com>
  * 
- * \version 0.0.1
+ * \version 0.0.2
  * 
  * \date 2025/06/23
  * 
@@ -33,13 +33,32 @@
  * \{
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
+#include <errno.h>
 
+#include <zmq.h>
 #include <fftw3.h>
 
 #include "version.h"
 
 #define GRS_FFT_DEFAULT_SIZE        16384
+
+bool verbose = false;
+
+void *zmq_context;
+void *zmq_subscriber;
+
+/**
+ * \brief IQ sample type.
+ */
+typedef struct
+{
+    float i;    /**< In-phase sample. */
+    float q;    /**< Quadrature sample. */
+} iq_t;
 
 /**
  * \brief .
@@ -63,23 +82,92 @@ void apply_hann_window(fftw_complex *samples, int N);
  */
 void compute_fft(fftw_complex *iq_samples, int N);
 
+/**
+ * \brief .
+ *
+ * \return None.
+ */
+void cleanup(void);
+
 int main(int argc, char *argv[])
 {
+    /* Initialize ZMQ */
+    zmq_context = zmq_ctx_new();
+    if (!zmq_context)
+    {
+        if (verbose)
+        {
+            fprintf(stderr, "Failed to create ZMQ context!\n\r");
+        }
+
+        exit(EXIT_FAILURE);
+    }
+
+    /* Set IO threads to 1 (reduces context switching) */
+    zmq_ctx_set(zmq_context, ZMQ_IO_THREADS, 1);
+
+    zmq_subscriber = zmq_socket(zmq_context, ZMQ_SUB);
+    if (!zmq_subscriber )
+    {
+        if (verbose)
+        {
+            fprintf(stderr, "Failed to create ZMQ publisher socket: %s\n\r", zmq_strerror(errno));
+        }
+
+        cleanup();
+
+        exit(EXIT_FAILURE);
+    }
+
+    /* Enable high water mark at 1M messages */
+    int hwm = 1000000;
+    zmq_setsockopt(zmq_subscriber, ZMQ_RCVHWM, &hwm, sizeof(hwm));
+
+    /* 2MB send buffer */
+    int buf = 2097152;
+    zmq_setsockopt(zmq_subscriber, ZMQ_RCVBUF, &buf, sizeof(buf));
+
+    /* Connect to publisher (change to your publisher's address) */
+    int rc = zmq_connect(zmq_subscriber, "tcp://localhost:5556");
+    if (rc != 0)
+    {
+        fprintf(stderr, "Error connecting to ZMQ publisher: %s\n\r", zmq_strerror(errno));
+
+        exit(EXIT_FAILURE);
+    }
+
+    /* Subscribe to all messages (empty filter) */
+    zmq_setsockopt(zmq_subscriber, ZMQ_SUBSCRIBE, "", 0);
+
     const int N = GRS_FFT_DEFAULT_SIZE; /* Number of samples (power of 2 recommended) */
     fftw_complex *iq_samples = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N);
 
-    /* Fill iq_samples with your data (real part = I, imag part = Q) */
-    int i = 0;
-    for(i = 0; i < N; i++)
+    while(1)
     {
+        /* Receive IQ samples */
+        int received = zmq_recv(zmq_subscriber, &received_samples, sizeof(iq_samples_t), 0);
+        if (received == -1)
+        {
+            fprintf(stderr, "Error receiving data: %s\n\r", zmq_strerror(errno));
+
+            continue;
+        }
+
+        if (received != sizeof(iq_samples_t))
+        {
+            fprintf(stderr, "Received incomplete data (%d bytes, expected %zu)\n\r", received, sizeof(iq_samples_t));
+
+            continue;
+        }
+
         iq_samples[i][0] = /* Your I value */;
         iq_samples[i][1] = /* Your Q value */;
+
+        /* Compute windowed FFT */
+        compute_fft(iq_samples, N);
+
+        // Process FFT results here...
     }
-
-    /* Compute windowed FFT */
-    compute_fft(iq_samples, N);
-
-    // Process FFT results here...
 
     fftw_free(iq_samples);
 
@@ -113,6 +201,19 @@ void compute_fft(fftw_complex *iq_samples, int N)
 
     /* Clean up */
     fftw_destroy_plan(plan);
+}
+
+void cleanup(void)
+{
+    if (zmq_subscriber)
+    {
+        zmq_close(zmq_subscriber);
+    }
+
+    if (zmq_context)
+    {
+        zmq_ctx_destroy(zmq_context);
+    }
 }
 
 /** \} End of grs-fft group */
