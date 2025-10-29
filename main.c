@@ -149,10 +149,10 @@ int main(int argc, char *argv[])
 
     while(1)
     {
-        iq_t iq_buf[GRS_FFT_DEFAULT_BUF_LEN] = {0};
+        iq_t iq_buf[N] = {0};
 
         /* Receive IQ samples */
-        int iq_len = zmq_recv(zmq_subscriber, iq_buf, sizeof(iq_t), 0);
+        int iq_len = zmq_recv(zmq_subscriber, iq_buf, sizeof(iq_buf), 0);
 
         if (iq_len == -1)
         {
@@ -162,9 +162,9 @@ int main(int argc, char *argv[])
         }
         else
         {
-            printf("Samples: %d\n\r", iq_len);
-            uint32_t i = 0U;
-            for(i = 0; i < iq_len; i++)
+            int num_samples = iq_len/sizeof(iq_t);
+            printf("Samples: %d\n\r", num_samples);
+            for(int i = 0; i < num_samples; i++)
             {
                 printf("IQ = [ %f, %f ]\n\r", iq_buf[i].i, iq_buf[i].q);
 
