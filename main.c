@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 
     while(1)
     {
-        iq_t iq_buf[N] = {0};
+        iq_t iq_buf[GRS_FFT_DEFAULT_SIZE] = {0};
 
         /* Receive IQ samples */
         int iq_len = zmq_recv(zmq_subscriber, iq_buf, sizeof(iq_buf), 0);
