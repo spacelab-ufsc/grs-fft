@@ -146,10 +146,11 @@ int main(int argc, char *argv[])
 
     const int N = GRS_FFT_DEFAULT_SIZE; /* Number of samples (power of 2 recommended) */
     fftw_complex *iq_samples = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N);
+    int samples_index = 0;
 
     while(1)
     {
-        iq_t iq_buf[GRS_FFT_DEFAULT_SIZE] = {0};
+        iq_t iq_buf[GRS_FFT_DEFAULT_BUF_LEN] = {0};
 
         /* Receive IQ samples */
         int iq_len = zmq_recv(zmq_subscriber, iq_buf, sizeof(iq_buf), 0);
@@ -157,23 +158,22 @@ int main(int argc, char *argv[])
         if (iq_len == -1)
         {
             fprintf(stderr, "Error receiving data: %s\n\r", zmq_strerror(errno));
-
             continue;
         }
-        else
+        int num_samples_recv = iq_len/sizeof(iq_t);
+        printf("Samples: %d\n\r", num_samples_recv);
+        for(int i = 0; i < num_samples_recv; i++)
         {
-            int num_samples = iq_len/sizeof(iq_t);
-            printf("Samples: %d\n\r", num_samples);
-            for(int i = 0; i < num_samples; i++)
-            {
-                printf("IQ = [ %f, %f ]\n\r", iq_buf[i].i, iq_buf[i].q);
+            printf("IQ = [ %f, %f ]\n\r", iq_buf[i].i, iq_buf[i].q);
 
-                iq_samples[i][0] = iq_buf[i].i;
-                iq_samples[i][1] = iq_buf[i].q;
+            iq_samples[samples_index][0] = iq_buf[samples_index].i;
+            iq_samples[samples_index][1] = iq_buf[samples_index].q;
+            samples_index++;
+
+            if (samples_index == N) {
+                compute_fft(iq_samples, N);
+                samples_index = 0;
             }
-
-            /* Compute windowed FFT */
-            compute_fft(iq_samples, N);
         }
     }
 
