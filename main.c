@@ -52,6 +52,7 @@
 #define GRS_FFT_DEFAULT_SIZE        16384
 
 bool verbose = false;
+bool printSamples = true;
 
 void *zmq_context;
 void *zmq_subscriber;
@@ -164,7 +165,9 @@ int main(int argc, char *argv[])
         printf("Samples: %d\n\r", num_samples_recv);
         for(int i = 0; i < num_samples_recv; i++)
         {
-            printf("IQ = [ %f, %f ]\n\r", iq_buf[i].i, iq_buf[i].q);
+            if (printSamples) {
+                printf("IQ = [ %f, %f ]\n\r", iq_buf[i].i, iq_buf[i].q);
+            }
 
             iq_samples[samples_index][0] = iq_buf[samples_index].i;
             iq_samples[samples_index][1] = iq_buf[samples_index].q;
