@@ -27,7 +27,9 @@
 
 ## Overview
 
-> TODO
+GRS FFT is a real-time Fast Fourier Transform (FFT) calculator for SpaceLab's Ground Station. It is part of the ground station's signal processing pipeline, sitting between the IQ sample receiver and the spectrum visualization components.
+
+The program subscribes to a ZMQ publisher socket where it receives a continuous stream of raw IQ (In-phase/Quadrature) samples. Once enough samples are accumulated, it applies a Hann window to reduce spectral leakage and then computes a 16384-point complex FFT using the FFTW3 library. The resulting frequency-domain data can then be consumed by downstream components such as the Spectrum Monitor.
 
 ## Dependencies
 
