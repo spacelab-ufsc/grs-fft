@@ -33,24 +33,65 @@ The program subscribes to a ZMQ publisher socket where it receives a continuous 
 
 ## Dependencies
 
+The Make build uses the system FFTW and ZeroMQ development packages:
+
 * libfftw3-dev (>= 3.3.10-13)
 * libczmq-dev (>= 4.2.1-2)
 
 ### Installation on Ubuntu
 
-```sudo apt install libfftw3-dev libczmq-dev```
+```sh
+sudo apt install libfftw3-dev libczmq-dev
+```
 
 ### Installation on Fedora
 
-```sudo dnf install fftw-devel czmq-devel```
+```sh
+sudo dnf install fftw-devel czmq-devel
+```
 
-## Building
+## Building with Make
 
-```make```
+```sh
+make
+```
 
-## Installing
+## Installing with Make
 
-```make install```
+```sh
+sudo make install
+```
+
+## Optional CMake build
+
+The CMake build requires CMake 3.16 or newer and a C/C++ compiler. FFTW 3.3.11
+and libzmq 4.3.5 are downloaded and built automatically with CPM.cmake, so
+their system development packages are not required.
+
+### CMake prerequisites on Ubuntu
+
+```sh
+sudo apt install cmake build-essential
+```
+
+### CMake prerequisites on Fedora
+
+```sh
+sudo dnf install cmake gcc gcc-c++ make
+```
+
+### Building with CMake
+
+```sh
+cmake -S . -B build
+cmake --build build
+```
+
+### Installing with CMake
+
+```sh
+sudo cmake --install build
+```
 
 ## License
 
